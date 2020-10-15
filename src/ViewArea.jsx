@@ -1,14 +1,16 @@
-import React, { Component } from "react";
+import React, {Component} from "react";
 
 import * as THREE from 'three-full';
 import vxShader from './main.vert';
 import fragShader from './main.frag';
 
-import { createAxes } from './AxesObject.js';
+// import { createAxes } from './AxesObject.js';
 import * as dat from 'dat.gui'
 import parse from 'color-parse';
 
-import bunny_model from './bunny.obj'
+import cup_model from './resources/cup.obj'
+
+// import bunny_model from './bunny.obj'
 
 function optionColorToVec3(color){
   let parsedColor = parse(color);
@@ -35,18 +37,34 @@ export class ViewArea extends Component {
     this.canvasRef = React.createRef();
     this.divRef = React.createRef();
 
+    const fov = 75;
+    const aspect = 2;  // the canvas default
+    const near = 0.1;
+    const far = 1000;
+
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera( 90, 1, 0.1, 1000 );
+    this.camera = new THREE.PerspectiveCamera( fov  , aspect, near, far );
 
-    this.camera.position.z = 15;
-    this.camera.position.x = 15;
-    this.camera.position.y = 15;
+    this.camera.position.z = 500;
+    this.camera.position.x = 0;
+    this.camera.position.y = 200;
 
-    this.scene.add(createAxes());
+    const cubeLoader = new THREE.CubeTextureLoader();
+
+    this.scene.background = cubeLoader.load([
+      'src/resources/posx.jpg',
+      'src/resources/negx.jpg',
+      'src/resources/posy.jpg',
+      'src/resources/negy.jpg',
+      'src/resources/posz.jpg',
+      'src/resources/negz.jpg',
+    ]);
+
+    // this.scene.add(createAxes());
 
     let loader = new THREE.OBJLoader();
 
-    this.bunnyObject = loader.parse(bunny_model);
+    this.bunnyObject = loader.parse(cup_model);
     this.bunnyObject.traverse( (child) => {
       if ( child instanceof THREE.Mesh ) {
           child.material = this.customMaterial;
