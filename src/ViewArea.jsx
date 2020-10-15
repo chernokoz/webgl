@@ -78,7 +78,7 @@ export class ViewArea extends Component {
 
     this.addDatGUI();
 
-    var renderer = new THREE.WebGLRenderer( { canvas: canvas, context: gl } );
+    const renderer = new THREE.WebGLRenderer({canvas: canvas, context: gl});
     renderer.setSize(canvas.width, canvas.height );
 
     this.prevTime = new Date();
@@ -113,12 +113,12 @@ export class ViewArea extends Component {
       const curTime = new Date();
 
       gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.clearColor(1, 1, 1, 1.0);
+      gl.clearColor(0.2, 0.2, 0.2, 1.0);
       gl.clear(gl.COLOR_BUFFER_BIT);
 
       this.controls.update();
 
-      this.bunnyObject.position.set(3, 1, 1);
+      this.bunnyObject.position.set(0, 0, 0);
       this.bunnyObject.scale.set(30, 30, 30);
       this.bunnyRotation = this.bunnyRotation + (curTime.getTime() - this.prevTime.getTime()) / 1000 * this.options.rotationSpeed * Math.PI / 180;
       this.bunnyObject.quaternion.setFromAxisAngle( new THREE.Vector3( 0, 1, 0 ), this.bunnyRotation);
