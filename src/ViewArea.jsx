@@ -27,7 +27,10 @@ export class ViewArea extends Component {
     this.customMaterial = new THREE.ShaderMaterial({
       uniforms:
       {
-        u_color: {value: new THREE.Vector3()},
+        u_color: { value: new THREE.Vector3() },
+        cube_map: { value: null },
+        n1: {value: 0.0},
+        n2: {value: 3.0}
       },
 
       vertexShader: vxShader,
@@ -40,7 +43,7 @@ export class ViewArea extends Component {
     const fov = 75;
     const aspect = 2;  // the canvas default
     const near = 0.1;
-    const far = 1000;
+    const far = 100000;
 
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera( fov  , aspect, near, far );
@@ -51,7 +54,7 @@ export class ViewArea extends Component {
 
     const cubeLoader = new THREE.CubeTextureLoader();
 
-    this.scene.background = cubeLoader.load([
+    this.cubeMap = cubeLoader.load([
       'src/resources/posx.jpg',
       'src/resources/negx.jpg',
       'src/resources/posy.jpg',
@@ -59,6 +62,8 @@ export class ViewArea extends Component {
       'src/resources/posz.jpg',
       'src/resources/negz.jpg',
     ]);
+
+    this.scene.background = this.cubeMap;
 
     // this.scene.add(createAxes());
 
@@ -76,7 +81,7 @@ export class ViewArea extends Component {
 
     this.options = {
       color: "#ffae23",
-      rotationSpeed: 60
+      rotationSpeed: 0
     };
   }
 
@@ -142,6 +147,7 @@ export class ViewArea extends Component {
       this.bunnyObject.quaternion.setFromAxisAngle( new THREE.Vector3( 0, 1, 0 ), this.bunnyRotation);
 
       this.customMaterial.uniforms.u_color.value = optionColorToVec3(this.options.color);
+      this.customMaterial.uniforms.cube_map.value = this.cubeMap;
 
       renderer.render( this.scene, this.camera );
 
