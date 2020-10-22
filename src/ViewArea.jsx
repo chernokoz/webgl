@@ -81,7 +81,9 @@ export class ViewArea extends Component {
 
     this.options = {
       color: "#ffae23",
-      rotationSpeed: 0
+      rotationSpeed: 0,
+      n1: 1.0,
+      n2: 1.33
     };
   }
 
@@ -148,6 +150,8 @@ export class ViewArea extends Component {
 
       this.customMaterial.uniforms.u_color.value = optionColorToVec3(this.options.color);
       this.customMaterial.uniforms.cube_map.value = this.cubeMap;
+      this.customMaterial.uniforms.n1.value = this.options.n1;
+      this.customMaterial.uniforms.n2.value = this.options.n2;
 
       renderer.render( this.scene, this.camera );
 
@@ -164,8 +168,10 @@ export class ViewArea extends Component {
     this.gui = new dat.GUI({ name: "My GUI" });
 
     const fields = this.gui.addFolder("Field");
-    fields.addColor(this.options, "color");
+    // fields.addColor(this.options, "color");
     fields.add(this.options, "rotationSpeed", 0, 360, 1);
+    fields.add(this.options, "n1", 0.0, 5.0, 0.01);
+    fields.add(this.options, "n2", 0.0, 5.0, 0.01);
     fields.open();
   }
 
