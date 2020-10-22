@@ -29,8 +29,8 @@ export class ViewArea extends Component {
       {
         u_color: { value: new THREE.Vector3() },
         cube_map: { value: null },
-        n1: {value: 0.0},
-        n2: {value: 3.0}
+        n1: {value: 1.0},
+        n2: {value: 1.33}
       },
 
       vertexShader: vxShader,
