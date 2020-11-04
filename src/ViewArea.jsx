@@ -24,7 +24,8 @@ let alpha = 0;
 let posX = 25;
 let posY = 25;
 let car = null;
-let mesh_size = 5;
+let mesh_size = 30;
+let inner_size = 10;
 let instance = null;
 
 function optionColorToVec3(color) {
@@ -42,12 +43,12 @@ export class ViewArea extends Component {
 
         let triangle, baryCoordinate;
 
-        let indX = Math.floor(posX / 10.0);
-        let indY = Math.floor(posY / 10.0);
+        let indX = Math.floor(posX / inner_size);
+        let indY = Math.floor(posY / inner_size);
 
-        let cf1 = posX / 10.0 - indX;
-        let cf2 = 1 - (posX / 10.0 - indX);
-        let cf3 = posY / 10.0 - indY;
+        let cf1 = posX / inner_size - indX;
+        let cf2 = 1 - (posX / inner_size - indX);
+        let cf3 = posY / inner_size - indY;
 
         console.log("Coeefs: ");
         console.log(cf1, cf2, cf3);
@@ -56,7 +57,7 @@ export class ViewArea extends Component {
             console.log("indY === 0");
             let point0 = this.geometry.vertices[0];
             let point1 = this.geometry.vertices[1 + indX];
-            let point2 = this.geometry.vertices[1 + (indX + 1) % 5];
+            let point2 = this.geometry.vertices[1 + (indX + 1) % mesh_size];
 
             triangle = new THREE.Triangle(
                 point0, point1, point2
@@ -71,9 +72,11 @@ export class ViewArea extends Component {
             console.log(baryCoordinate);
         } else if (indY === mesh_size - 1) {
             console.log("indY === n - 1");
-            let point0 = this.geometry.vertices[1 + (indY - 1) * 5 + indX];
-            let point1 = this.geometry.vertices[mesh_size * mesh_size + 1];
-            let point2 = this.geometry.vertices[1 + (indY - 1) * 5 + (indX + 1) % 5];
+            let point0 = this.geometry.vertices[1 + (indY - 1) * mesh_size + indX];
+            let point1 = this.geometry.vertices[mesh_size * (mesh_size - 1) + 1];
+            let point2 = this.geometry.vertices[1 + (indY - 1) * mesh_size + (indX + 1) % mesh_size];
+
+            console.log(point0, point1, point2);
 
             triangle = new THREE.Triangle(
                 point0, point1, point2
@@ -87,10 +90,10 @@ export class ViewArea extends Component {
 
             console.log(baryCoordinate);
         } else {
-            let point1 = this.geometry.vertices[1 + (indY - 1) * 5 + indX];
-            let point2 = this.geometry.vertices[1 + (indY - 1) * 5 + (indX + 1) % 5];
-            let point3 = this.geometry.vertices[1 + indY * 5 + indX];
-            let point4 = this.geometry.vertices[1 + indY * 5 + (indX + 1) % 5];
+            let point1 = this.geometry.vertices[1 + (indY - 1) * mesh_size + indX];
+            let point2 = this.geometry.vertices[1 + (indY - 1) * mesh_size + (indX + 1) % mesh_size];
+            let point3 = this.geometry.vertices[1 + indY * mesh_size + indX];
+            let point4 = this.geometry.vertices[1 + indY * mesh_size + (indX + 1) % mesh_size];
 
             let triangle1 = new THREE.Triangle(
                 new THREE.Vector3(indX, indY, 0),
@@ -106,8 +109,8 @@ export class ViewArea extends Component {
             console.log(triangle1);
             console.log(triangle2);
 
-            let baryCoordinate1 = triangle1.getBarycoord(new THREE.Vector3(posX / 10, posY / 10, 0));
-            let baryCoordinate2 = triangle2.getBarycoord(new THREE.Vector3(posX / 10, posY / 10, 0));
+            let baryCoordinate1 = triangle1.getBarycoord(new THREE.Vector3(posX / inner_size, posY / inner_size, 0));
+            let baryCoordinate2 = triangle2.getBarycoord(new THREE.Vector3(posX / inner_size, posY / inner_size, 0));
 
             console.log(baryCoordinate1);
             console.log(baryCoordinate2);
@@ -390,16 +393,16 @@ export class ViewArea extends Component {
         const fov = scene.getObjectByName('car');
         console.log(fov.position);
         if (e.keyCode === 87) {
-            posY = succMod(posY, 50);
+            posY = succMod(posY, mesh_size * inner_size);
         }
         else if (e.keyCode === 65) {
-            posX = succMod(posX, 50);
+            posX = succMod(posX, mesh_size * inner_size);
         }
         else if (e.keyCode === 83) {
-            posY = predMod(posY, 50);
+            posY = predMod(posY, mesh_size * inner_size);
         }
         else if (e.keyCode === 68) {
-            posX = predMod(posX, 50);
+            posX = predMod(posX, mesh_size * inner_size);
         }
         console.log(posX, posY);
         instance.updateCoordinates();
