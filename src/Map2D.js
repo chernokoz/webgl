@@ -1,6 +1,7 @@
 import * as THREE from "three-full";
 import car_file from "./resources/RetroRacerOrangeRotated.obj";
 import {warn} from "three-full/sources/polyfills";
+import * as mainjs from "./ViewArea.jsx";
 
 let instance = null;
 
@@ -19,16 +20,17 @@ export class Map2D {
 
         instance = this;
         this.geometry = geometry;
+
+        this.updateNormals();
     }
 
+    normals = [];
     posX = 25.0;
     posY = 25.0;
-    mesh_size = 5;
-    inner_size = 10;
+    mesh_size = mainjs.mesh_size;
+    inner_size = mainjs.inner_size;
 
     onKeyDown(e) {
-        // const fov = scene.getObjectByName('car');
-        // console.log(fov.position);
         if (e.keyCode === 87) {
             instance.posY = succMod(instance.posY, instance.mesh_size * instance.inner_size);
         } else if (e.keyCode === 65) {
@@ -38,9 +40,24 @@ export class Map2D {
         } else if (e.keyCode === 68) {
             instance.posX = predMod(instance.posX, instance.mesh_size * instance.inner_size);
         }
-        // console.log(this.posX, this.posY);
         instance.updateCoordinates();
+    }
 
+    updateNormals () {
+        let normals = this.normals;
+        for (let ind = 0, max = this.geometry.faces.length; ind < max; ind++) {
+            const face = this.geometry.faces[ind];
+            const faceNormals = face.vertexNormals;
+            if (normals.length <= face.a) {
+                normals.push(faceNormals[0]);
+            }
+            if (normals.length <= face.b) {
+                normals.push(faceNormals[1]);
+            }
+            if (normals.length <= face.c) {
+                normals.push(faceNormals[2]);
+            }
+        }
     }
 
     updateCoordinates () {
@@ -49,7 +66,7 @@ export class Map2D {
         let posX = this.posX; let posY = this.posY;
         let inner_size = this.inner_size; let mesh_size = this.mesh_size;
 
-        let triangle, baryCoordinate;
+        let indices, triangle, baryCoordinate;
 
         let indX = Math.floor(posX / inner_size);
         let indY = Math.floor(posY / inner_size);
@@ -66,6 +83,8 @@ export class Map2D {
             let point0 = this.geometry.vertices[index1];
             let point1 = this.geometry.vertices[index2];
             let point2 = this.geometry.vertices[index3];
+
+            indices = [index1, index2, index3];
 
             triangle = new THREE.Triangle(
                 point0, point1, point2
@@ -85,6 +104,8 @@ export class Map2D {
             let point0 = this.geometry.vertices[index1];
             let point1 = this.geometry.vertices[index2];
             let point2 = this.geometry.vertices[index3];
+
+            indices = [index1, index2, index3];
 
             triangle = new THREE.Triangle(
                 point0, point1, point2
@@ -121,11 +142,14 @@ export class Map2D {
             let baryCoordinate2 = triangle2.getBarycoord(new THREE.Vector3(posX / inner_size, posY / inner_size, 0));
 
             if (baryCoordinate1.x >= 0 && baryCoordinate1.y >= 0 && baryCoordinate1.z >= 0) {
+                indices = [index1, index3, index4];
+
                 triangle = new THREE.Triangle(
                     point1, point3, point4
                 );
                 baryCoordinate = baryCoordinate1;
             } else if (baryCoordinate2.x >= 0 && baryCoordinate2.y >= 0 && baryCoordinate2.z >= 0) {
+                indices = [index1, index4, index2];
                 triangle = new THREE.Triangle(
                     point1, point4, point2
                 );
@@ -135,13 +159,22 @@ export class Map2D {
             }
         }
 
+        const normals = this.normals;
+
+        console.log(normals);
+
+        let normal = new THREE.Vector3()
+            .add(normals[indices[0]].clone().multiplyScalar(baryCoordinate.x))
+            .add(normals[indices[1]].clone().multiplyScalar(baryCoordinate.y))
+            .add(normals[indices[2]].clone().multiplyScalar(baryCoordinate.z));
+
         let point = new THREE.Vector3(0, 0, 0)
             .add(triangle.a.clone().multiplyScalar(baryCoordinate.x))
             .add(triangle.b.clone().multiplyScalar(baryCoordinate.y))
             .add(triangle.c.clone().multiplyScalar(baryCoordinate.z));
 
         this.car.position.copy(point.add(triangle.getNormal()));
-        this.car.lookAt(new THREE.Vector3().add(this.car.position).add(triangle.getNormal()));
+        this.car.lookAt(new THREE.Vector3().add(this.car.position).add(normal));
 
         console.log(this.car.position);
     }

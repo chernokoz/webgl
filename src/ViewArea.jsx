@@ -28,7 +28,8 @@ const light_spot_position = {x: 0, y: 200, z: 0,}
 const light_spot_camera_near = 50.0;
 const light_spot_shadow_darkness = 0.35;
 
-let mesh_size = 5;
+export const mesh_size = 200;
+export const inner_size = 10;
 
 scene = new THREE.Scene();
 
@@ -144,13 +145,14 @@ export class ViewArea extends Component {
 
             geometry.verticesNeedUpdate = true;
             geometry.normalsNeedUpdate = true;
+            geometry.computeVertexNormals();
             geometry.computeFaceNormals();
 
             scene.add(mesh);
 
-            const helper = new THREE.VertexNormalsHelper(mesh, 2, 0x00ff00, 1);
-
-            scene.add(helper);
+            // const helper = new THREE.VertexNormalsHelper(mesh, 2, 0x00ff00, 1);
+            //
+            // scene.add(helper);
 
 
             // const wireframe = new THREE.WireframeGeometry( geometry );
@@ -168,7 +170,7 @@ export class ViewArea extends Component {
         scene.add(this.map.car);
 
         // Add directional light
-        var spot_light = new THREE.SpotLight(light_spot_color, light_spot_intensity);
+        const spot_light = new THREE.SpotLight(light_spot_color, light_spot_intensity);
         spot_light.position.set(light_spot_position.x, light_spot_position.y, light_spot_position.z);
         spot_light.target = scene;
         spot_light.castShadow = true;
