@@ -17,6 +17,15 @@ let scene, camera, renderer,controls;
 
 let facenumber = 0;
 
+// Lights
+const light_am_color = 0xAAAAAA;
+const light_spot_color = 0xDDDDDD;
+const light_spot_intensity = 0.7;
+const light_spot_position = {x: 0, y: 200, z: 0,}
+const light_spot_camera_near = 50.0;
+const light_spot_shadow_darkness = 0.35;
+
+
 scene = new THREE.Scene();
 
 let fi = 0;
@@ -24,7 +33,7 @@ let alpha = 0;
 let posX = 25;
 let posY = 25;
 let car = null;
-let mesh_size = 30;
+let mesh_size = 4;
 let inner_size = 10;
 let instance = null;
 
@@ -55,9 +64,14 @@ export class ViewArea extends Component {
 
         if (indY === 0) {
             console.log("indY === 0");
-            let point0 = this.geometry.vertices[0];
-            let point1 = this.geometry.vertices[1 + indX];
-            let point2 = this.geometry.vertices[1 + (indX + 1) % mesh_size];
+
+            let index1 = 0;
+            let index2 = 1 + indX;
+            let index3 = 1 + (indX + 1) % mesh_size;
+
+            let point0 = this.geometry.vertices[index1];
+            let point1 = this.geometry.vertices[index2];
+            let point2 = this.geometry.vertices[index3];
 
             triangle = new THREE.Triangle(
                 point0, point1, point2
@@ -69,12 +83,25 @@ export class ViewArea extends Component {
                 cf1 / (cf1 + cf2 + 2 * (1 - cf3))
             );
 
+            console.log("Indices:");
+            console.log(index1, index2, index3);
+
+
             console.log(baryCoordinate);
         } else if (indY === mesh_size - 1) {
             console.log("indY === n - 1");
-            let point0 = this.geometry.vertices[1 + (indY - 1) * mesh_size + indX];
-            let point1 = this.geometry.vertices[mesh_size * (mesh_size - 1) + 1];
-            let point2 = this.geometry.vertices[1 + (indY - 1) * mesh_size + (indX + 1) % mesh_size];
+
+            let index1 = 1 + (indY - 1) * mesh_size + indX;
+            let index2 = mesh_size * (mesh_size - 1) + 1;
+            let index3 = 1 + (indY - 1) * mesh_size + (indX + 1) % mesh_size;
+
+
+            let point0 = this.geometry.vertices[index1];
+            let point1 = this.geometry.vertices[index2];
+            let point2 = this.geometry.vertices[index3];
+
+            console.log("Indices:");
+            console.log(index1, index2, index3);
 
             console.log(point0, point1, point2);
 
@@ -90,21 +117,29 @@ export class ViewArea extends Component {
 
             console.log(baryCoordinate);
         } else {
-            let point1 = this.geometry.vertices[1 + (indY - 1) * mesh_size + indX];
-            let point2 = this.geometry.vertices[1 + (indY - 1) * mesh_size + (indX + 1) % mesh_size];
-            let point3 = this.geometry.vertices[1 + indY * mesh_size + indX];
-            let point4 = this.geometry.vertices[1 + indY * mesh_size + (indX + 1) % mesh_size];
+            let index1 = 1 + (indY - 1) * mesh_size + indX;
+            let index2 = 1 + (indY - 1) * mesh_size + (indX + 1) % mesh_size;
+            let index3 = 1 + indY * mesh_size + indX;
+            let index4 = 1 + indY * mesh_size + (indX + 1) % mesh_size;
+
+            let point1 = this.geometry.vertices[index1];
+            let point2 = this.geometry.vertices[index2];
+            let point3 = this.geometry.vertices[index3];
+            let point4 = this.geometry.vertices[index4];
 
             let triangle1 = new THREE.Triangle(
                 new THREE.Vector3(indX, indY, 0),
                 new THREE.Vector3(indX, indY + 1, 0),
-                new THREE.Vector3(indX + 1, indY, 0)
-            );
-            let triangle2 = new THREE.Triangle(
-                new THREE.Vector3(indX + 1, indY, 0),
-                new THREE.Vector3(indX, indY + 1, 0),
                 new THREE.Vector3(indX + 1, indY + 1, 0)
             );
+            let triangle2 = new THREE.Triangle(
+                new THREE.Vector3(indX, indY, 0),
+                new THREE.Vector3(indX + 1, indY + 1, 0),
+                new THREE.Vector3(indX + 1, indY, 0)
+            );
+
+            console.log("Indices:");
+            console.log(index1, index2, index3, index4);
 
             console.log(triangle1);
             console.log(triangle2);
@@ -117,12 +152,12 @@ export class ViewArea extends Component {
 
             if (baryCoordinate1.x >= 0 && baryCoordinate1.y >= 0 && baryCoordinate1.z >= 0) {
                 triangle = new THREE.Triangle(
-                    point1, point3, point2
+                    point1, point3, point4
                 );
                 baryCoordinate = baryCoordinate1;
             } else if (baryCoordinate2.x >= 0 && baryCoordinate2.y >= 0 && baryCoordinate2.z >= 0) {
                 triangle = new THREE.Triangle(
-                    point2, point3, point4
+                    point1, point4, point2
                 );
                 baryCoordinate = baryCoordinate2;
             } else {
@@ -154,10 +189,10 @@ export class ViewArea extends Component {
             uniforms:
                 {
                     u_color: {value: new THREE.Vector3()},
-                },
+                }
 
-            vertexShader: vxShader,
-            fragmentShader: fragShader
+            // vertexShader: vxShader,
+            // fragmentShader: fragShader
         });
 
         this.onKeyDown.updateCoordinates = this.updateCoordinates;
@@ -177,6 +212,9 @@ export class ViewArea extends Component {
         this.geometry = geometry;
         const material = new THREE.MeshBasicMaterial( {color: 0xff0000} );
         const sphere = new THREE.Mesh( geometry, material );
+        sphere.receiveShadow = true;
+        sphere.castShadow = true;
+
         scene.add( sphere );
 
         this.facenumber = 0;
@@ -260,7 +298,7 @@ export class ViewArea extends Component {
                 const h = getH(dir);
                 const vector = new THREE.Vector3();
                 vector.set(geometry.vertices[i].x, geometry.vertices[i].y, geometry.vertices[i].z);
-                vector.setLength(50 + 50 * h);
+                vector.setLength(50 + 100 * h);
                 geometry.vertices[i].x = vector.x;
                 geometry.vertices[i].y = vector.y;
                 geometry.vertices[i].z = vector.z;
@@ -273,6 +311,15 @@ export class ViewArea extends Component {
             geometry.computeFaceNormals();
 
             scene.add(mesh);
+
+            const wireframe = new THREE.WireframeGeometry( geometry );
+
+            const line = new THREE.LineSegments( wireframe );
+            line.material.depthTest = false;
+            line.material.opacity = 0.25;
+            line.material.transparent = true;
+
+            scene.add( line );
         };
 
         let loader = new THREE.OBJLoader();
@@ -280,7 +327,7 @@ export class ViewArea extends Component {
         this.car = loader.parse(car_file);
         this.car.traverse( (child) => {
             if ( child instanceof THREE.Mesh ) {
-                child.material = this.customMaterial;
+                child.material = new THREE.MeshBasicMaterial( {color: 0xff0000} );
                 child.scale.set(4, 4, 4);
             }
         });
@@ -292,10 +339,23 @@ export class ViewArea extends Component {
         this.car.fi = 0;
         this.car.alpha = 0;
 
+        this.car.castShadow = true;
+        this.car.receiveShadow = true;
+
         const carPos = new THREE.Vector2();
         carPos.name = 'carPos';
 
         scene.add(this.car);
+
+        // Add directional light
+        var spot_light = new THREE.SpotLight(light_spot_color, light_spot_intensity);
+        spot_light.position.set(light_spot_position.x, light_spot_position.y, light_spot_position.z);
+        spot_light.target = scene;
+        spot_light.castShadow = true;
+        spot_light.receiveShadow = true;
+        spot_light.shadowDarkness = light_spot_shadow_darkness;
+        spot_light.shadowCameraNear	= light_spot_camera_near;
+        scene.add(spot_light);
 
         this.car.update = this.updateCoordinates;
 
