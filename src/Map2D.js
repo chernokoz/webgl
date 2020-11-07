@@ -1,34 +1,43 @@
 import * as THREE from "three-full";
-import car_file from "./resources/RetroRacerOrangeRotated.obj";
+import car_file from "../dist/resources/RetroRacerOrangeRotated.obj";
+// import car_file1 from "../dist/resources/RetroRacerOrange.obj";
+// import car_file2 from "../dist/resources/RetroRacerOrange.mtl";
 import {warn} from "three-full/sources/polyfills";
 import * as mainjs from "./ViewArea.jsx";
+import {inner_size, mesh_size} from "./ViewArea.jsx";
 
 let instance = null;
 
 export class Map2D {
 
-    constructor(geometry) {
+    constructor(geometry, scene) {
+
         let loader = new THREE.OBJLoader();
 
         this.car = loader.parse(car_file);
         this.car.traverse( (child) => {
             if ( child instanceof THREE.Mesh ) {
-                child.material = new THREE.MeshBasicMaterial( {color: 0xff0000} );
-                child.scale.set(4, 4, 4);
+                child.material = new THREE.MeshPhongMaterial({color: '#E9967A'});
+                child.scale.set(2, 2, 2);
             }
         });
 
+        scene.add(this.car);
+
         instance = this;
+
         this.geometry = geometry;
 
         this.updateNormals();
     }
 
     normals = [];
-    posX = 25.0;
-    posY = 25.0;
+
     mesh_size = mainjs.mesh_size;
     inner_size = mainjs.inner_size;
+
+    posX = mesh_size * inner_size / 2.0;
+    posY = mesh_size * inner_size / 2.0;
 
     onKeyDown(e) {
         if (e.keyCode === 87) {
@@ -161,7 +170,7 @@ export class Map2D {
 
         const normals = this.normals;
 
-        console.log(normals);
+        // console.log(normals);
 
         let normal = new THREE.Vector3()
             .add(normals[indices[0]].clone().multiplyScalar(baryCoordinate.x))
@@ -174,9 +183,9 @@ export class Map2D {
             .add(triangle.c.clone().multiplyScalar(baryCoordinate.z));
 
         this.car.position.copy(point.add(triangle.getNormal()));
-        this.car.lookAt(new THREE.Vector3().add(this.car.position).add(normal));
+        this.car.lookAt(new THREE.Vector3().add(this.car.position).add(normal.clone().multiplyScalar(3)));
 
-        console.log(this.car.position);
+        // console.log(this.car.position);
     }
 }
 
