@@ -6,10 +6,10 @@ import * as THREE from 'three-full';
 import vxShader from './main.vert';
 import fragShader from './main.frag';
 
-import * as dat from 'dat.gui'
+import * as dat from 'dat.gui';
 import parse from 'color-parse';
 
-import car_file from '../dist/resources/RetroRacerOrangeRotated.obj'
+import car_file from '../dist/resources/RetroRacerOrangeRotated.obj';
 import {Colors} from "three-full/sources/constants";
 import {warn} from "three-full/sources/polyfills";
 import {Map2D} from "./Map2D";
@@ -20,16 +20,24 @@ let scene, camera, renderer,controls, map;
 
 let facenumber = 0;
 
-// Lights
 const light_am_color = 0xAAAAAA;
 const light_spot_color = 0xDDDDDD;
 const light_spot_intensity = 0.7;
-const light_spot_position = {x: 0, y: 200, z: 0,}
+const light_spot_position = {x: 0, y: 300, z: 0,}
 const light_spot_camera_near = 50.0;
 const light_spot_shadow_darkness = 0.35;
 
-export const mesh_size = 150;
-export const inner_size = 20;
+
+export const mesh_size = 8;
+export const inner_size = 5;
+
+function replaceThreeChunkFn(a, b) {
+    return THREE.ShaderChunk[b] + '\n';
+}
+
+function shaderParse(glsl) {
+    return glsl.replace(/\/\/\s?chunk\(\s?(\w+)\s?\);/g, replaceThreeChunkFn);
+}
 
 scene = new THREE.Scene();
 
@@ -52,9 +60,52 @@ export class ViewArea extends Component {
             'src/cubemap/back.png',
         ]);
 
+        const img = document.createElement('img');
+        img.crossOrigin = "Anonymous";
+        let canvas;
+
+        img.src = base64_imgData;
+        const texture1 = new THREE.Texture();
+        texture1.image = img;
+
+        const grassTexture = new THREE.TextureLoader().load( '../dist/resources/ground.jpg')
+
+        const shader = new THREE.ShaderMaterial({
+            uniforms : {
+                    ambientLightColor: { value: null },
+                    lightProbe: { value: null },
+                    directionalLights: { value: null },
+                    spotLights: { value: null },
+                    rectAreaLights: { value: null },
+                    pointLights: { value: null },
+                    hemisphereLights: { value: null },
+                    directionalShadowMap: { value: null },
+                    directionalShadowMatrix: { value: null },
+                    spotShadowMap: { value: null },
+                    spotShadowMatrix: { value: null },
+                    pointShadowMap: { value: null },
+                    pointShadowMatrix: { value: null },
+
+
+                    u_color: { value: new THREE.Vector3() },
+                    cube_map: { value: null },
+                    n1: {value: 1.0},
+                    n2: {value: 1.33},
+                    h: { type: "t", value: new THREE.TextureLoader().load( base64_imgData ) },
+                    img1: { type: "t", value: new THREE.TextureLoader().load( '../dist/resources/water2.jpg' )},
+                    img2: { type: "t", value: grassTexture},
+                    img3: { type: "t", value: new THREE.TextureLoader().load( '../dist/resources/snow.jpg' )},
+                },
+
+            vertexShader: vxShader,
+            fragmentShader: fragShader,
+            fog: true,
+            lights: true,
+            dithering: true,
+        });
+
 
         scene.background = this.cubeMap;
-        // scene.background = new THREE.Color(  0xf0f0f0  );
         this.camera = new THREE.PerspectiveCamera(90, 1, 0.1, 1000);
 
         this.camera.position.z = 0;
@@ -63,18 +114,14 @@ export class ViewArea extends Component {
 
         const geometry = new THREE.SphereGeometry(10, mesh_size, mesh_size);
         this.geometry = geometry;
-        const material = new THREE.MeshBasicMaterial({color: 0xff0000});
-        const sphere = new THREE.Mesh(geometry, material);
-        sphere.receiveShadow = true;
-        sphere.castShadow = true;
 
-        scene.add(sphere);
 
-        this.facenumber = 0;
+        // const material = new THREE.MeshStandardMaterial( { color: 0xff0000 } );
+        // const sphere = new THREE.Mesh(geometry, material);
+        // sphere.receiveShadow = true;
+        // sphere.castShadow = true;
 
-        const img = document.createElement('img');
-        img.crossOrigin = "Anonymous";
-        let canvas;
+        // scene.add(sphere);
 
         const getH = function (dir) {
 
@@ -120,25 +167,30 @@ export class ViewArea extends Component {
             };
         };
 
-        const texture = new THREE.Texture();
-        texture.image = img;
+        // const texture = new THREE.Texture();
+        // texture.image = img;
 
-        img.src = base64_imgData;
+        // const material1 = new THREE.MeshBasicMaterial({
+        //     side: THREE.DoubleSide,
+        //     shading: THREE.SmoothShading,
+        //     map: texture
+        // });
 
-        const material1 = new THREE.MeshBasicMaterial({
-            side: THREE.DoubleSide,
-            shading: THREE.SmoothShading,
-            map: texture
-        });
+        // const sphereMaterial = new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: true} );
+        // sphereMaterial.opacity = 0.1;
+        // sphereMaterial.transparent = false;
 
-        const mesh = new THREE.Mesh(geometry, material1);
+        const mesh = new THREE.Mesh(geometry, shader);
+
+        // mesh.castShadow = true;
+        mesh.receiveShadow = true;
 
         this.map = new Map2D(geometry, scene);
 
-        let map = this.map.car;
+        let car = this.map.car;
 
         img.onload = function () {
-            texture.needsUpdate = true;
+            // texture.needsUpdate = true;
 
             canvas = document.createElement('canvas');
             canvas.width = img.width;
@@ -165,7 +217,10 @@ export class ViewArea extends Component {
             geometry.computeVertexNormals();
             geometry.computeFaceNormals();
 
-            scene.add(mesh);
+            mesh.receiveShadow = true;
+            // mesh.castShadow = true;
+
+            // scene.add(mesh);
 
             // const helper = new THREE.VertexNormalsHelper(mesh, 2, 0x00ff00, 1);
             //
@@ -173,26 +228,56 @@ export class ViewArea extends Component {
 
 
             // const wireframe = new THREE.WireframeGeometry( geometry );
-            //
+
             // const line = new THREE.LineSegments( wireframe );
             // line.material.depthTest = false;
             // line.material.opacity = 0.25;
             // line.material.transparent = true;
-
+            //
             // scene.add( line );
         };
 
+        scene.add(mesh);
+
         scene.add(this.map.car);
 
-        // Add directional light
-        const spot_light = new THREE.SpotLight(light_spot_color, light_spot_intensity);
-        spot_light.position.set(light_spot_position.x, light_spot_position.y, light_spot_position.z);
-        spot_light.target = scene;
-        spot_light.castShadow = true;
-        spot_light.receiveShadow = true;
-        spot_light.shadowDarkness = light_spot_shadow_darkness;
-        spot_light.shadowCameraNear = light_spot_camera_near;
-        scene.add(spot_light);
+        //////////////////////////////////
+        // Add directional light /////////
+        //////////////////////////////////
+        // const spot_light = new THREE.SpotLight(light_spot_color);
+        // spot_light.position.set(light_spot_position.x, light_spot_position.y, light_spot_position.z);
+        // spot_light.target = scene;
+        // spot_light.castShadow = true;
+        // // spot_light.receiveShadow = true;
+        // spot_light.shadowDarkness = light_spot_shadow_darkness;
+        // spot_light.shadowCameraNear = light_spot_camera_near;
+        //
+        // spot_light.shadow.focus = 1;
+        //
+        // spot_light.shadow.mapSize.width = 1024;
+        // spot_light.shadow.mapSize.height = 1024;
+        //
+        // spot_light.shadow.camera.near = 500;
+        // spot_light.shadow.camera.far = 4000;
+        // spot_light.shadow.camera.fov = 60;
+        // scene.add(spot_light);
+
+        const light = new THREE.DirectionalLight( 0xffffff, 1, 1000 );
+        light.position.set( 0, 300, 0 ); //default; light shining from top
+        light.castShadow = true; // default false
+        scene.add( light );
+
+        light.target = this.map.car;
+
+        //Set up shadow properties for the light
+        light.shadow.mapSize.width = 512; // default
+        light.shadow.mapSize.height = 512; // default
+        light.shadow.camera.near = 0.5; // default
+        light.shadow.camera.far = 500; // default
+
+        const helper1 = new THREE.CameraHelper( light.shadow.camera );
+
+        scene.add( helper1 );
 
         document.addEventListener("keydown", this.map.onKeyDown);
     }
@@ -213,6 +298,8 @@ export class ViewArea extends Component {
 
         const renderer = new THREE.WebGLRenderer({canvas: canvas, context: gl});
         renderer.setSize(canvas.width, canvas.height);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
         this.prevTime = new Date();
 

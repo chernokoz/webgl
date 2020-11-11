@@ -17,12 +17,36 @@ export class Map2D {
         this.car = loader.parse(car_file);
         this.car.traverse( (child) => {
             if ( child instanceof THREE.Mesh ) {
-                child.material = new THREE.MeshPhongMaterial({color: '#E9967A'});
-                child.scale.set(2, 2, 2);
+                child.material = new THREE.MeshStandardMaterial( { color: 0xff0000, flatShading: true } );
+                child.scale.set(4, 4, 4);
             }
         });
 
+        this.car.traverse(function( child )
+        {
+            if ( child instanceof THREE.Object3D )
+            {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+
+        // this.car.receiveShadow = true;
+
         scene.add(this.car);
+
+        const geometry2 = new THREE.SphereGeometry(10, mesh_size, mesh_size);
+        // this.geometry = geometry;
+
+        const material2 = new THREE.MeshStandardMaterial( { color: 0x000ff0 } );
+        const sphere2 = new THREE.Mesh(geometry2, material2);
+
+        sphere2.position.set(0, 200, 0);
+
+        sphere2.receiveShadow = true;
+        sphere2.castShadow = true;
+
+        // scene.add(sphere2);
 
         instance = this;
 
@@ -36,8 +60,11 @@ export class Map2D {
     mesh_size = mainjs.mesh_size;
     inner_size = mainjs.inner_size;
 
-    posX = mesh_size * inner_size / 2.0;
-    posY = mesh_size * inner_size / 2.0;
+    posX = 1;
+    posY = 1;
+
+    // posX = mesh_size * inner_size / 2.0;
+    // posY = mesh_size * inner_size / 2.0;
 
     onKeyDown(e) {
         if (e.keyCode === 87) {
@@ -183,6 +210,7 @@ export class Map2D {
             .add(triangle.c.clone().multiplyScalar(baryCoordinate.z));
 
         this.car.position.copy(point.add(triangle.getNormal()));
+
         this.car.lookAt(new THREE.Vector3().add(this.car.position).add(normal.clone().multiplyScalar(3)));
 
         // console.log(this.car.position);
