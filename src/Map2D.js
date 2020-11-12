@@ -1,7 +1,5 @@
 import * as THREE from "three-full";
-import car_file from "../dist/resources/RetroRacerOrangeRotated.obj";
-// import car_file1 from "../dist/resources/RetroRacerOrange.obj";
-// import car_file2 from "../dist/resources/RetroRacerOrange.mtl";
+import car_file from "../dist/src/resources/RetroRacerOrangeRotated.obj";
 import {warn} from "three-full/sources/polyfills";
 import * as mainjs from "./ViewArea.jsx";
 import {inner_size, mesh_size} from "./ViewArea.jsx";
@@ -60,11 +58,11 @@ export class Map2D {
     mesh_size = mainjs.mesh_size;
     inner_size = mainjs.inner_size;
 
-    posX = 1;
-    posY = 1;
+    // posX = 1;
+    // posY = 1;
 
-    // posX = mesh_size * inner_size / 2.0;
-    // posY = mesh_size * inner_size / 2.0;
+    posX = mesh_size * inner_size / 2.0;
+    posY = mesh_size * inner_size / 2.0;
 
     onKeyDown(e) {
         if (e.keyCode === 87) {
@@ -197,8 +195,6 @@ export class Map2D {
 
         const normals = this.normals;
 
-        // console.log(normals);
-
         let normal = new THREE.Vector3()
             .add(normals[indices[0]].clone().multiplyScalar(baryCoordinate.x))
             .add(normals[indices[1]].clone().multiplyScalar(baryCoordinate.y))
@@ -213,7 +209,7 @@ export class Map2D {
 
         this.car.lookAt(new THREE.Vector3().add(this.car.position).add(normal.clone().multiplyScalar(3)));
 
-        // console.log(this.car.position);
+        console.log(this.car.position);
     }
 }
 

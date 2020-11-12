@@ -147,11 +147,11 @@ void main() {
   vec3 finalColor = vec3(0, 0.75, 0);
 
   float height = texture2D(h, vUv).x;
-  if (height < 0.35) {
+  if (height < 0.33) {
     finalColor = get_water_color(vUv).xyz;
   } else if (height > 0.7) {
     finalColor = get_snow_color(vUv).xyz;
-  } else if (height > 0.4) {
+  } else if (height > 0.43) {
     finalColor = get_grass_color(vUv).xyz;
     //    gl_FragColor = vec4(texture2D(img2, vUv));
   } else {
